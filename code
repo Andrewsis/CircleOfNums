@@ -1,0 +1,401 @@
+#include <iostream>
+using namespace std;
+
+class CircleOfNums {
+private:
+    struct Node
+    {
+        int value;
+        Node* next;
+        Node(int value)
+        {
+            this->value = value;
+            next = nullptr;
+        }
+    };
+
+    Node* first;
+    int size;
+
+    int getSumCircleNums()
+    {
+        int sum = 0;
+        Node* current = first;
+
+        while (current->next != first)
+        {
+            sum += current->value;
+            current = current->next;
+        }
+        sum += current->value;
+
+        return sum;
+    }
+public:
+    CircleOfNums()
+    {
+        size = 0;
+        first = nullptr;
+    }
+
+    CircleOfNums(CircleOfNums&& circle) noexcept
+    {
+        if (circle.first != nullptr)
+        {
+            size = circle.size;
+            first = circle.first;
+
+            circle.size = 0;
+            circle.first = nullptr;
+            
+            return;
+        }
+        size = 0;
+        first = nullptr;
+    }
+
+    CircleOfNums(CircleOfNums& circle) 
+    {
+        size = 0;
+        Node* current = circle.first;
+
+        while (current->next != circle.first)
+        {
+            *this << current->value;
+            current = current->next;
+        }
+        *this << current->value;
+    }
+
+    CircleOfNums(int* array, const int& size)
+    {
+        this->size = 0;
+
+        for (int i = 0; i < size; i++)
+        {
+            *this << array[i];
+        }
+    }
+
+    ~CircleOfNums()
+    {
+        Node* temp = first;
+        if (temp != nullptr)
+        {
+            while (temp->next != first)
+            {
+                temp = temp->next;
+            }
+
+            Node* toDelete = temp;
+            while (toDelete != nullptr)
+            {
+                Node* next = toDelete->next;
+                delete toDelete;
+                toDelete = next;
+                if (toDelete == first) break;
+            }
+        }
+    }
+
+    int getSize() { return size; }
+
+    operator int* ()
+    {
+        int* array = new int[size];
+        Node* current = first;
+        for (int i = 0; i < size; i++)
+        {
+            array[i] = current->value;
+            current = current->next; 
+        }
+        return array;
+    }
+
+    void ShowCircle()
+    {
+        if (first == nullptr) return;
+        Node* prev = first;
+        cout << "circle: " << first->value << ' ';
+        while (prev->next != first)
+        {
+            prev = prev->next;
+            cout << prev->value << ' ';
+        }
+        cout << endl;
+    }
+
+    // Copy operator
+    CircleOfNums& operator=(const CircleOfNums& circle)
+    {
+        this->~CircleOfNums();
+
+        size = 0;
+        Node* current = circle.first;
+
+        while (current->next != circle.first)
+        {
+            *this << current->value;
+            current = current->next;
+        }
+        *this << current->value;
+        
+        return *this;
+    }
+
+    // Move operator
+    CircleOfNums& operator=(CircleOfNums&& circle) noexcept
+    {
+        this->~CircleOfNums();
+
+        if (circle.first != nullptr)
+        {
+            delete[] first;
+
+            size = circle.size;
+            first = circle.first;
+
+            circle.size = 0;
+            circle.first = nullptr;
+
+            return *this;
+        }
+        size = 0;
+        first = nullptr;
+        return *this;
+    }
+
+    // Comparison
+    bool operator> (CircleOfNums& circle) 
+    {
+        if (size > circle.size) return true;
+        else if (size < circle.size) return false;
+        else
+        {
+            if (this->getSumCircleNums() > circle.getSumCircleNums()) return true;
+            else return false;
+        }
+    }
+
+    // Comparison
+    bool operator< (CircleOfNums& circle) 
+    {
+        if (size < circle.size) return true;
+        else if (size > circle.size) return false;
+        else
+        {
+            if (this->getSumCircleNums() < circle.getSumCircleNums()) return true;
+            else return false;
+        }
+    }
+
+    // Comparison
+    bool operator>= (CircleOfNums& circle)
+    {
+        return !(*this < circle);
+    }
+    
+    // Comparison
+    bool operator<= (CircleOfNums& circle)
+    {
+        return !(*this > circle);
+    }
+    
+    // isEquals
+    bool operator== (CircleOfNums& circle)
+    {
+        if (size != circle.size)
+        {
+            return false;
+        }
+        else
+        {
+            Node* current = first;
+            Node* exampleCurrent = circle.first;
+
+            for (int i = 0; i < size; i++)
+            {
+                if (current->value != exampleCurrent->value) return false;
+                current = current->next;
+                exampleCurrent = exampleCurrent->next;
+            }
+        }
+
+        return true;
+    }
+   
+    // !(isEquals)
+    bool operator!= (CircleOfNums& circle)
+    {
+        return !(*this == circle);
+    }
+
+    // Add() from console
+    friend istream& operator<< (istream& in, CircleOfNums& circle) 
+    {
+        int value;
+        in >> value;
+        Node* newNode = new Node(value);
+        if (circle.first == nullptr)
+        {
+            circle.first = newNode;
+            circle.first->next = circle.first;
+        }
+        else
+        {
+            Node* prev = circle.first;
+            while (prev->next != circle.first)
+            {
+                prev = prev->next;
+            }
+            prev->next = newNode;
+            newNode->next = circle.first;
+        }
+
+        circle.size++;
+        return in;
+    }
+
+    // Add() from code
+    int operator<< (int value) 
+    {
+        Node* newNode = new Node(value);
+        if (first == nullptr)
+        {
+            first = newNode;
+            first->next = first;
+        }
+        else
+        {
+            Node* prev = first;
+            while (prev->next != first)
+            {
+                prev = prev->next;
+            }
+            prev->next = newNode;
+            newNode->next = first;
+        }
+
+        size++;
+        return value;
+    }
+
+    // Remove()
+    friend ostream& operator>> (ostream& out, CircleOfNums& circle) 
+    {
+        if (circle.first == nullptr)
+        {
+            cerr << "The test is empty." << endl;
+            out << -1;
+            return out;
+        }
+
+        int value = circle.first->value;
+        Node* temp = circle.first->next;
+        if (temp == circle.first)
+        {
+            delete circle.first;
+            circle.first = nullptr;
+        }
+        else
+        {
+            Node* prev = circle.first;
+            while (prev->next != circle.first)
+            {
+                prev = prev->next;
+            }
+
+            prev->next = temp;
+            delete circle.first;
+            circle.first = temp;
+        }
+        circle.size--;
+
+        out << value;
+        return out;
+    }
+
+    // ShowCurrent() 
+    int operator> (int& num) 
+    {
+        if (first == nullptr)
+            return -1;
+        num = first->value;
+        return num;
+    }
+
+    // MoveClockWise()
+    void operator++ (int) 
+    {
+        if (first != nullptr)
+        {
+            first = first->next;
+        }
+    }
+
+    // MoveCounterClockWise()
+    void operator-- (int) 
+    {
+        if (first != nullptr)
+        {
+            Node* prev = first;
+            while (prev->next != first)
+            {
+                prev = prev->next;
+            }
+
+            first = prev;
+        }
+    }
+};
+
+int main() {
+    CircleOfNums test1;
+    test1 << 1;
+    test1 << 2;
+    test1 << 3;
+
+    CircleOfNums test2;
+
+    cout << "--------------------" << endl;
+    test2 = test1;
+    cout << "test1: ";
+    test1.ShowCircle();
+
+    cout << "test2: ";
+    test2.ShowCircle();
+    test2 << 5;
+
+    cout << "--------------------" << endl;
+    
+    cout << "test1: ";
+    test1.ShowCircle();
+
+    cout << "test2: ";
+    test2.ShowCircle();
+
+    cout << "--------------------" << endl;
+
+    cout >> test2;
+
+    cout << "test1: ";
+    test1.ShowCircle();
+
+    cout << "test2: ";
+    test2.ShowCircle();
+
+    cout << "--------------------" << endl;
+
+    test2--;
+    cout << "Removed: " >> test2 << endl;
+
+    cout << "test1: ";
+    test1.ShowCircle();
+
+    cout << "test2: ";
+    test2.ShowCircle();
+
+    cout << "--------------------" << endl;
+
+   return 0;
+}
